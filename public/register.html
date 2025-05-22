@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>記帳本 - 註冊</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(8px);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 24px;
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    input[type="text"], input[type="password"] {
+      padding: 14px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: background-color 0.3s ease;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    button {
+      padding: 14px;
+      background-color: #5a4eea;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #4338ca;
+    }
+    p {
+      margin-top: 18px;
+      font-size: 0.9rem;
+    }
+    p a {
+      color: #e0d7ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    p a:hover {
+      text-decoration: underline;
+    }
+    .error-message {
+      color: #ff6b6b;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+    .success-message {
+      color: #6bcf6b;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 25px;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>記帳本 註冊</h1>
+    <form id="register-form">
+      <input type="text" id="reg-username" placeholder="帳號" required autocomplete="username" />
+      <input type="password" id="reg-password" placeholder="密碼" required autocomplete="new-password" />
+      <input type="password" id="reg-password-confirm" placeholder="確認密碼" required autocomplete="new-password" />
+      <button type="submit">註冊</button>
+    </form>
+    <p>已經有帳號？<a href="login.html">登入</a></p>
+    <div class="error-message" id="error-msg"></div>
+    <div class="success-message" id="success-msg"></div>
+  </div>
+
+  <script>
+    const registerForm = document.getElementById('register-form');
+    const errorMsg = document.getElementById('error-msg');
+    const successMsg = document.getElementById('success-msg');
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+      successMsg.textContent = '';
+
+      const username = document.getElementById('reg-username').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const passwordConfirm = document.getElementById('reg-password-confirm').value;
+
+      if (!username || !password || !passwordConfirm) {
+        errorMsg.textContent = '請填寫所有欄位';
+        return;
+      }
+
+      if (password !== passwordConfirm) {
+        errorMsg.textContent = '密碼與確認密碼不符';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ username, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          errorMsg.textContent = data.message || '註冊失敗';
+          return;
+        }
+
+        successMsg.textContent = '註冊成功！3秒後自動跳轉登入頁面';
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 3000);
+      } catch (error) {
+        errorMsg.textContent = '網路錯誤，請稍後再試';
+        console.error(error);
+      }
+    });
+  </script>
+  
+</body>
+</html>
