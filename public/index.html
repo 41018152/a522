@@ -112,19 +112,19 @@
   <script>
     const loginForm = document.getElementById('login-form');
     const errorMsg = document.getElementById('error-msg');
-
+  
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       errorMsg.textContent = '';
-
+  
       const username = document.getElementById('login-username').value.trim();
       const password = document.getElementById('login-password').value;
-
+  
       if (!username || !password) {
         errorMsg.textContent = '請輸入帳號與密碼';
         return;
       }
-
+  
       try {
         const res = await fetch('/api/login', {
           method: 'POST',
@@ -134,22 +134,22 @@
           credentials: 'include',  // 重要：讓瀏覽器帶 cookie
           body: JSON.stringify({ username, password }),
         });
-
+  
         if (!res.ok) {
-          // 伺服器回傳錯誤
           const data = await res.json();
           errorMsg.textContent = data.message || '登入失敗';
           return;
         }
-
-        // 登入成功，直接跳轉 dashboard
+  
+        // 登入成功，存到 localStorage
+        localStorage.setItem('loggedInUser', username);
         window.location.href = 'dashboard.html';
+  
       } catch (error) {
         errorMsg.textContent = '網路錯誤，請稍後再試';
         console.error(error);
       }
     });
-  </script>
-  
+  </script>  
 </body>
 </html>

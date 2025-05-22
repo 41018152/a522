@@ -152,127 +152,134 @@
     </form>
   </div>
 
-<script>
-  const testAccounts = ['testuser', 'guest', 'demo'];
-  const loggedInUser = localStorage.getItem('loggedInUser');
-  if (!loggedInUser) {
-    alert("請先登入");
-    location.href = "index.html";
-  }
+  <script>
+    // 測試帳號清單
+    const testAccounts = ['testuser', 'guest', 'demo'];
 
-  const isTestAccount = testAccounts.includes(loggedInUser);
-  const users = JSON.parse(localStorage.getItem('users') || '{}');
-  const userData = users[loggedInUser] || { profile: {}, records: [] };
-
-  const nameInput = document.getElementById('name');
-  const avatarInput = document.getElementById('avatar');
-  const avatarPreview = document.getElementById('avatarPreview');
-  const tempAvatarInfo = document.getElementById('tempAvatarInfo');
-  const initialAmountInput = document.getElementById('initialAmount');
-  const initialAmountInfo = document.getElementById('initialAmountInfo');
-  const testAccountWarning = document.getElementById('testAccountWarning');
-  const saveBtn = document.getElementById('saveBtn');
-  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
-
-  function initForm() {
-    nameInput.value = userData.profile.name || loggedInUser;
-    if (userData.profile.avatar) {
-      avatarPreview.src = userData.profile.avatar;
-      avatarPreview.style.display = 'block';
-    } else {
-      avatarPreview.style.display = 'none';
+    // 取得登入使用者名稱，判斷是否登入
+    const loggedInUser = localStorage.getItem('loggedInUser');
+    if (!loggedInUser || loggedInUser.trim() === "") {
+      alert("請先登入帳號");
+      location.href = "index.html";
     }
 
-    // 只有設定過初始金額才鎖定欄位
-    if (userData.profile.initialAmount != null) {
-      initialAmountInput.value = userData.profile.initialAmount;
-      initialAmountInput.disabled = true;
-      initialAmountInput.style.textDecoration = 'line-through';
-      initialAmountInfo.textContent = '現有金額已設定，無法再修改';
-    } else {
-      initialAmountInput.disabled = false;
-      initialAmountInput.style.textDecoration = 'none';
-      initialAmountInfo.textContent = '';
+    const isTestAccount = testAccounts.includes(loggedInUser);
+
+    // 讀取所有用戶資料
+    const users = JSON.parse(localStorage.getItem('users') || '{}');
+    // 取出目前登入用戶的資料，若無則給預設值
+    const userData = users[loggedInUser] || { profile: {}, records: [] };
+
+    // 表單元素
+    const nameInput = document.getElementById('name');
+    const avatarInput = document.getElementById('avatar');
+    const avatarPreview = document.getElementById('avatarPreview');
+    const tempAvatarInfo = document.getElementById('tempAvatarInfo');
+    const initialAmountInput = document.getElementById('initialAmount');
+    const initialAmountInfo = document.getElementById('initialAmountInfo');
+    const testAccountWarning = document.getElementById('testAccountWarning');
+    const saveBtn = document.getElementById('saveBtn');
+    const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+
+    // 初始化表單內容
+    function initForm() {
+      nameInput.value = userData.profile.name || loggedInUser;
+
+      if (userData.profile.avatar) {
+        avatarPreview.src = userData.profile.avatar;
+        avatarPreview.style.display = 'block';
+      } else {
+        avatarPreview.style.display = 'none';
+      }
+
+      if (userData.profile.initialAmount != null) {
+        initialAmountInput.value = userData.profile.initialAmount;
+        initialAmountInput.disabled = true;
+        initialAmountInput.style.textDecoration = 'line-through';
+        initialAmountInfo.textContent = '現有金額已設定，無法再修改';
+      } else {
+        initialAmountInput.disabled = false;
+        initialAmountInput.style.textDecoration = 'none';
+        initialAmountInfo.textContent = '';
+      }
+
+      if (isTestAccount) {
+        testAccountWarning.style.display = 'block';
+        testAccountWarning.textContent = '目前為測試帳號，所有變更僅限預覽，資料不會儲存';
+        initialAmountInput.disabled = true;
+        initialAmountInput.style.textDecoration = 'line-through';
+      } else {
+        testAccountWarning.style.display = 'none';
+      }
     }
+    initForm();
 
-    if (isTestAccount) {
-      testAccountWarning.style.display = 'block';
-      testAccountWarning.textContent = '目前為測試帳號，所有變更僅限預覽，資料不會儲存';
-      initialAmountInput.disabled = true;
-      initialAmountInput.style.textDecoration = 'line-through';
-    } else {
-      testAccountWarning.style.display = 'none';
-    }
-  }
-  initForm();
+    // 大頭貼選擇即時預覽
+    avatarInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        avatarPreview.src = reader.result;
+        avatarPreview.style.display = 'block';
+        tempAvatarInfo.style.display = isTestAccount ? 'block' : 'none';
+      };
+      reader.readAsDataURL(file);
+    });
 
-  avatarInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      avatarPreview.src = reader.result;
-      avatarPreview.style.display = 'block';
-      tempAvatarInfo.style.display = isTestAccount ? 'block' : 'none';
-    };
-    reader.readAsDataURL(file);
-  });
+    // 儲存表單資料
+    document.getElementById('profile-form').addEventListener('submit', (e) => {
+      e.preventDefault();
 
-  document.getElementById('profile-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = nameInput.value.trim();
-    const avatar = avatarPreview.src;
-    const amount = Number(initialAmountInput.value);
+      const name = nameInput.value.trim();
+      const avatar = avatarPreview.src;
+      const amount = Number(initialAmountInput.value);
 
-    if (isTestAccount) {
-      alert("測試帳號資料不會儲存，此為前端預覽。");
-      return;
-    }
-
-    // 只有欄位未鎖定時才設定初始金額並鎖定欄位
-    if (!initialAmountInput.disabled) {
-      if (isNaN(amount) || amount < 0) {
-        alert("請輸入有效的金額（0 或以上）");
+      if (isTestAccount) {
+        alert("測試帳號資料不會儲存，此為前端預覽。");
         return;
       }
-      userData.profile.initialAmount = amount;
-      initialAmountInput.disabled = true;
-      initialAmountInput.style.textDecoration = 'line-through';
-      initialAmountInfo.textContent = '現有金額已設定，無法再修改';
-    }
 
-    if (avatar && avatar.startsWith("data:image")) {
-      userData.profile.avatar = avatar;
-    }
+      if (!initialAmountInput.disabled) {
+        if (isNaN(amount) || amount < 0) {
+          alert("請輸入有效的金額（0 或以上）");
+          return;
+        }
+        userData.profile.initialAmount = amount;
+        initialAmountInput.disabled = true;
+        initialAmountInput.style.textDecoration = 'line-through';
+        initialAmountInfo.textContent = '現有金額已設定，無法再修改';
+      }
 
-    userData.profile.name = name || loggedInUser;
+      if (avatar && avatar.startsWith("data:image")) {
+        userData.profile.avatar = avatar;
+      }
 
-    users[loggedInUser] = userData;
-    localStorage.setItem('users', JSON.stringify(users));
+      userData.profile.name = name || loggedInUser;
 
-    alert("儲存成功！");
-    location.href = "dashboard.html";
-  });
+      users[loggedInUser] = userData;
+      localStorage.setItem('users', JSON.stringify(users));
 
-  // 新增刪除帳號功能
-  deleteAccountBtn.addEventListener('click', () => {
-    if (isTestAccount) {
-      alert("測試帳號無法刪除！");
-      return;
-    }
-    const confirmed = confirm("確定要刪除帳號嗎？此動作無法復原！");
-    if (!confirmed) return;
+      alert("儲存成功！");
+      location.href = "dashboard.html";
+    });
 
-    // 刪除使用者資料
-    delete users[loggedInUser];
-    localStorage.setItem('users', JSON.stringify(users));
+    // 刪除帳號功能
+    deleteAccountBtn.addEventListener('click', () => {
+      if (isTestAccount) {
+        alert("測試帳號無法刪除！");
+        return;
+      }
+      const confirmed = confirm("確定要刪除帳號嗎？此動作無法復原！");
+      if (!confirmed) return;
 
-    // 移除登入狀態
-    localStorage.removeItem('loggedInUser');
+      delete users[loggedInUser];
+      localStorage.setItem('users', JSON.stringify(users));
+      localStorage.removeItem('loggedInUser');
 
-    alert("帳號已刪除，將跳轉至首頁");
-    location.href = "index.html";
-  });
-</script>
+      alert("帳號已刪除，將跳轉至首頁");
+      location.href = "index.html";
+    });
+  </script>
 </body>
 </html>
