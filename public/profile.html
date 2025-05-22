@@ -114,6 +114,11 @@
       font-weight: 600;
       font-size: 0.95rem;
     }
+    /* 新增刪除按鈕特別樣式 */
+    #deleteAccountBtn {
+      margin-top: 1rem;
+      background-color: #d9534f;
+    }
     @media (max-width: 480px) {
       .container {
         margin: 0 10px;
@@ -143,6 +148,7 @@
       <div id="testAccountWarning" class="warning" style="display:none;"></div>
 
       <button id="saveBtn" type="submit">儲存資料</button>
+      <button id="deleteAccountBtn" type="button">刪除帳號</button>
     </form>
   </div>
 
@@ -166,6 +172,7 @@
   const initialAmountInfo = document.getElementById('initialAmountInfo');
   const testAccountWarning = document.getElementById('testAccountWarning');
   const saveBtn = document.getElementById('saveBtn');
+  const deleteAccountBtn = document.getElementById('deleteAccountBtn');
 
   function initForm() {
     nameInput.value = userData.profile.name || loggedInUser;
@@ -245,6 +252,26 @@
 
     alert("儲存成功！");
     location.href = "dashboard.html";
+  });
+
+  // 新增刪除帳號功能
+  deleteAccountBtn.addEventListener('click', () => {
+    if (isTestAccount) {
+      alert("測試帳號無法刪除！");
+      return;
+    }
+    const confirmed = confirm("確定要刪除帳號嗎？此動作無法復原！");
+    if (!confirmed) return;
+
+    // 刪除使用者資料
+    delete users[loggedInUser];
+    localStorage.setItem('users', JSON.stringify(users));
+
+    // 移除登入狀態
+    localStorage.removeItem('loggedInUser');
+
+    alert("帳號已刪除，將跳轉至首頁");
+    location.href = "index.html";
   });
 </script>
 </body>
