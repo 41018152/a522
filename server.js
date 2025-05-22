@@ -1,7 +1,9 @@
+/* === server.js === */
 const express = require('express');
 const session = require('express-session');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 const bodyParser = require('body-parser');
 
 const app = express();
@@ -35,16 +37,17 @@ function requireLogin(req, res, next) {
   next();
 }
 
-// 註冊
-app.post('/api/register', (req, res) => {
+app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) return res.status(400).json({ success: false, message: '帳號密碼不可空白' });
 
   const users = readUsers();
   if (users[username]) return res.status(400).json({ success: false, message: '帳號已存在' });
 
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   users[username] = {
-    password,
+    password: hashedPassword,
     profile: { name: username },
     records: []
   };
@@ -52,32 +55,34 @@ app.post('/api/register', (req, res) => {
   res.json({ success: true, message: '註冊成功' });
 });
 
-// 登入
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   const users = readUsers();
-  if (!users[username] || users[username].password !== password) {
+  if (!users[username]) {
     return res.status(400).json({ success: false, message: '帳號或密碼錯誤' });
   }
+
+  const valid = await bcrypt.compare(password, users[username].password);
+  if (!valid) {
+    return res.status(400).json({ success: false, message: '帳號或密碼錯誤' });
+  }
+
   req.session.username = username;
   res.json({ success: true, message: '登入成功', username });
 });
 
-// 登出
 app.post('/api/logout', requireLogin, (req, res) => {
   req.session.destroy(() => {
     res.json({ success: true, message: '已登出' });
   });
 });
 
-// 取得當前用戶資訊
 app.get('/api/me', requireLogin, (req, res) => {
   const users = readUsers();
   const user = users[req.session.username];
   res.json({ success: true, username: req.session.username, profile: user.profile });
 });
 
-// 更新個人資料（暱稱、大頭貼、初始金額只能設定一次）
 app.post('/api/profile', requireLogin, (req, res) => {
   const { name, avatar, initialAmount } = req.body;
   const users = readUsers();
@@ -102,14 +107,12 @@ app.post('/api/profile', requireLogin, (req, res) => {
   res.json({ success: true, profile: user.profile });
 });
 
-// 取得記帳紀錄
 app.get('/api/records', requireLogin, (req, res) => {
   const users = readUsers();
   const user = users[req.session.username];
   res.json({ success: true, records: user.records });
 });
 
-// 新增記帳紀錄
 app.post('/api/records', requireLogin, (req, res) => {
   const { category, amount, type, date, note } = req.body;
   if (!category || !amount || !type || !date) {
@@ -126,7 +129,25 @@ app.post('/api/records', requireLogin, (req, res) => {
   res.json({ success: true, record });
 });
 
-// 刪除記帳紀錄
+app.put('/api/records/:id', requireLogin, (req, res) => {
+  const { id } = req.params;
+  const { category, amount, type, date, note } = req.body;
+  const users = readUsers();
+  const user = users[req.session.username];
+
+  const record = user.records.find(r => r.id === id);
+  if (!record) return res.status(404).json({ success: false, message: '記錄未找到' });
+
+  if (category) record.category = category;
+  if (amount) record.amount = Number(amount);
+  if (type) record.type = type;
+  if (date) record.date = date;
+  if (note !== undefined) record.note = note;
+
+  writeUsers(users);
+  res.json({ success: true, record });
+});
+
 app.delete('/api/records/:id', requireLogin, (req, res) => {
   const id = req.params.id;
   const users = readUsers();
