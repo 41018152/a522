@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>記帳本 - 主頁</title>
+<style>
+  /* --- 省略 CSS 不變，照你原本的 CSS --- */
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    font-family: "Noto Sans TC", "微軟正黑體", Arial, sans-serif;
+    background: #f9fafd;
+    margin: 0; padding: 20px;
+    min-height: 100vh;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  header h1 {
+    font-weight: 700;
+    color: #333;
+  }
+  header nav a {
+    margin-left: 1rem;
+    text-decoration: none;
+    color: #764ba2;
+    font-weight: 600;
+  }
+  header nav a:hover {
+    text-decoration: underline;
+  }
+  .summary {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .summary div {
+    flex: 1 1 150px;
+    background: #764ba2;
+    color: white;
+    padding: 1rem;
+    border-radius: 10px;
+    text-align: center;
+    position: relative;
+  }
+  .summary div.total {
+    background: #4b4b7a;
+  }
+  .summary div h3 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
+  .summary div p {
+    margin: 0.5rem 0 0 0;
+    font-weight: 600;
+    font-size: 1.3rem;
+  }
+  .test-label {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 0.8rem;
+    background: #f39c12;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 12px;
+  }
+  main {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  section.form-section {
+    flex: 1 1 350px;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.08);
+  }
+  section.list-section {
+    flex: 2 1 600px;
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.08);
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    margin: 0.7rem 0 0.3rem;
+  }
+  input[type=text], input[type=number], select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 1rem;
+    border-radius: 6px;
+    border: 1.5px solid #ccc;
+    transition: border-color 0.3s ease;
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus {
+    border-color: #764ba2;
+    outline: none;
+  }
+  button {
+    margin-top: 1rem;
+    padding: 12px;
+    width: 100%;
+    background: #764ba2;
+    color: white;
+    border: none;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background: #5a3686;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  table thead tr {
+    background: #764ba2;
+    color: white;
+  }
+  table th, table td {
+    padding: 0.8rem 0.6rem;
+    border: 1px solid #ddd;
+    text-align: center;
+  }
+  table tbody tr:nth-child(even) {
+    background: #f6f6f6;
+  }
+  .filter-section {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .filter-section select {
+    flex: 1 1 140px;
+  }
+  .search-input {
+    flex: 1 1 200px;
+  }
+  @media (max-width: 900px) {
+    main {
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>記帳本 - 主頁</h1>
+    <nav>
+      <a href="profile.html">個人資料</a>
+      <a href="#" id="logoutBtn">登出</a>
+    </nav>
+  </header>
+
+  <div class="summary">
+    <div class="total">
+      <h3>身上現有總金額</h3>
+      <p id="totalAmount">0 元</p>
+      <span id="testLabel" class="test-label" style="display:none;">測試中</span>
+    </div>
+    <div>
+      <h3>今日收入</h3>
+      <p id="todayIncome">0 元</p>
+    </div>
+    <div>
+      <h3>今日支出</h3>
+      <p id="todayExpense">0 元</p>
+    </div>
+  </div>
+
+  <main>
+    <section class="form-section">
+      <h2>新增記帳項目</h2>
+      <form id="recordForm">
+        <label for="type">類型</label>
+        <select id="type" required>
+          <option value="">請選擇</option>
+          <option value="income">收入</option>
+          <option value="expense">支出</option>
+        </select>
+
+        <label for="category">分類</label>
+        <select id="category" required>
+          <option value="">請選擇</option>
+          <option value="飲食">飲食</option>
+          <option value="居住">居住</option>
+          <option value="交通">交通</option>
+          <option value="娛樂">娛樂</option>
+          <option value="其他">其他</option>
+        </select>
+
+        <label for="amount">金額 (元)</label>
+        <input type="number" id="amount" min="0" step="1" required />
+
+        <label for="desc">備註 (選填)</label>
+        <input type="text" id="desc" placeholder="可輸入備註" />
+
+        <label for="date">日期</label>
+        <input type="date" id="date" required />
+
+        <button type="submit">新增記錄</button>
+      </form>
+    </section>
+
+    <section class="list-section">
+      <h2>記帳紀錄</h2>
+
+      <div class="filter-section">
+        <select id="filterType">
+          <option value="all">全部類型</option>
+          <option value="income">收入</option>
+          <option value="expense">支出</option>
+        </select>
+
+        <select id="filterCategory">
+          <option value="all">全部分類</option>
+          <option value="飲食">飲食</option>
+          <option value="居住">居住</option>
+          <option value="交通">交通</option>
+          <option value="娛樂">娛樂</option>
+          <option value="其他">其他</option>
+        </select>
+
+        <input type="date" id="filterStartDate" />
+        <input type="date" id="filterEndDate" />
+        <input type="text" id="searchInput" class="search-input" placeholder="搜尋備註..." />
+        <button id="clearFilter">清除篩選</button>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>類型</th>
+            <th>分類</th>
+            <th>金額</th>
+            <th>備註</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="recordTableBody">
+          <!-- 記錄列 -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+<script>
+(() => {
+  const loggedInUser = "user1"; // 假設已登入，實際可從 cookie/session 取
+  let userData = null; // 從 API 取得的用戶資料
+
+  // 元素
+  const totalAmountEl = document.getElementById("totalAmount");
+  const todayIncomeEl = document.getElementById("todayIncome");
+  const todayExpenseEl = document.getElementById("todayExpense");
+  const testLabelEl = document.getElementById("testLabel");
+
+  const recordForm = document.getElementById("recordForm");
+  const recordTableBody = document.getElementById("recordTableBody");
+
+  const filterType = document.getElementById("filterType");
+  const filterCategory = document.getElementById("filterCategory");
+  const filterStartDate = document.getElementById("filterStartDate");
+  const filterEndDate = document.getElementById("filterEndDate");
+  const searchInput = document.getElementById("searchInput");
+  const clearFilterBtn = document.getElementById("clearFilter");
+
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  // 取得用戶資料
+  async function fetchUserData() {
+    try {
+      const res = await fetch(`/api/user/${loggedInUser}`);
+      if (!res.ok) throw new Error("讀取用戶資料失敗");
+      const data = await res.json();
+      return data;
+    } catch (err) {
+      alert(err.message);
+      return null;
+    }
+  }
+
+  // 新增記錄 API
+  async function addRecord(record) {
+    try {
+      const res = await fetch(`/api/user/${loggedInUser}/records`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      });
+      if (!res.ok) throw new Error("新增記錄失敗");
+      return await res.json();
+    } catch (err) {
+      alert(err.message);
+      return null;
+    }
+  }
+
+  // 刪除記錄 API
+  async function deleteRecord(recordKey) {
+    try {
+      const res = await fetch(`/api/user/${loggedInUser}/records`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(recordKey),
+      });
+      if (!res.ok) throw new Error("刪除記錄失敗");
+      return await res.json();
+    } catch (err) {
+      alert(err.message);
+      return null;
+    }
+  }
+
+  // 更新畫面摘要與列表
+  function updateUI() {
+    if (!userData) return;
+
+    // 總金額 = 初始金額 + 所有收入 - 所有支出
+    const initialAmount = userData.profile?.initialAmount || 0;
+    const records = userData.records || [];
+
+    let totalIncome = 0,
+      totalExpense = 0;
+    records.forEach((r) => {
+      if (r.type === "income") totalIncome += Number(r.amount);
+      else if (r.type === "expense") totalExpense += Number(r.amount);
+    });
+
+    const totalAmount = initialAmount + totalIncome - totalExpense;
+    totalAmountEl.textContent = `${totalAmount} 元`;
+
+    // 今日收入 & 支出
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let todayIncome = 0,
+      todayExpense = 0;
+    records.forEach((r) => {
+      if (r.date === todayStr) {
+        if (r.type === "income") todayIncome += Number(r.amount);
+        else if (r.type === "expense") todayExpense += Number(r.amount);
+      }
+    });
+    todayIncomeEl.textContent = `${todayIncome} 元`;
+    todayExpenseEl.textContent = `${todayExpense} 元`;
+
+    // 顯示「測試中」標籤，因為是 demo（可自行判斷是否顯示）
+    testLabelEl.style.display = "inline-block";
+
+    // 篩選 & 搜尋
+    renderRecordList();
+  }
+
+  // 篩選條件套用並渲染表格
+  function renderRecordList() {
+    if (!userData) return;
+    const records = userData.records || [];
+
+    let filtered = records;
+
+    // 篩選類型
+    if (filterType.value !== "all") {
+      filtered = filtered.filter((r) => r.type === filterType.value);
+    }
+    // 篩選分類
+    if (filterCategory.value !== "all") {
+      filtered = filtered.filter((r) => r.category === filterCategory.value);
+    }
+    // 篩選日期區間
+    const start = filterStartDate.value;
+    if (start) {
+      filtered = filtered.filter((r) => r.date >= start);
+    }
+    const end = filterEndDate.value;
+    if (end) {
+      filtered = filtered.filter((r) => r.date <= end);
+    }
+    // 搜尋備註
+    const searchText = searchInput.value.trim().toLowerCase();
+    if (searchText) {
+      filtered = filtered.filter((r) =>
+        (r.desc || "").toLowerCase().includes(searchText)
+      );
+    }
+
+    // 渲染表格
+    recordTableBody.innerHTML = "";
+    if (filtered.length === 0) {
+      recordTableBody.innerHTML =
+        '<tr><td colspan="6">沒有符合條件的記錄</td></tr>';
+      return;
+    }
+
+    filtered.forEach((r) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.date}</td>
+        <td>${r.type === "income" ? "收入" : "支出"}</td>
+        <td>${r.category}</td>
+        <td>${r.amount}</td>
+        <td>${r.desc || ""}</td>
+        <td><button class="deleteBtn">刪除</button></td>
+      `;
+      // 刪除按鈕綁事件
+      tr.querySelector(".deleteBtn").addEventListener("click", async () => {
+        if (!confirm("確定要刪除此筆記錄嗎？")) return;
+        const key = {
+          date: r.date,
+          type: r.type,
+          category: r.category,
+          amount: r.amount,
+          desc: r.desc || "",
+        };
+        const newData = await deleteRecord(key);
+        if (newData) {
+          userData = newData;
+          updateUI();
+        }
+      });
+      recordTableBody.appendChild(tr);
+    });
+  }
+
+  // 新增表單提交
+  recordForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const newRecord = {
+      type: recordForm.type.value,
+      category: recordForm.category.value,
+      amount: Number(recordForm.amount.value),
+      desc: recordForm.desc.value.trim(),
+      date: recordForm.date.value,
+    };
+    if (!newRecord.type || !newRecord.category || !newRecord.date) {
+      alert("請完整填寫類型、分類和日期");
+      return;
+    }
+    if (newRecord.amount <= 0) {
+      alert("金額需大於 0");
+      return;
+    }
+
+    const newData = await addRecord(newRecord);
+    if (newData) {
+      userData = newData;
+      updateUI();
+      recordForm.reset();
+    }
+  });
+
+  // 篩選事件
+  [filterType, filterCategory, filterStartDate, filterEndDate].forEach(
+    (el) => {
+      el.addEventListener("change", renderRecordList);
+    }
+  );
+  searchInput.addEventListener("input", renderRecordList);
+
+  clearFilterBtn.addEventListener("click", () => {
+    filterType.value = "all";
+    filterCategory.value = "all";
+    filterStartDate.value = "";
+    filterEndDate.value = "";
+    searchInput.value = "";
+    renderRecordList();
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    // 模擬登出，實際要清 session/cookie
+    alert("已登出");
+    location.href = "login.html";
+  });
+
+  // 初始化
+  async function init() {
+    userData = await fetchUserData();
+    if (userData) {
+      updateUI();
+    }
+  }
+  init();
+})();
+</script>
+</body>
+</html>

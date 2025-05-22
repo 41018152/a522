@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>個人資料設定</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Noto Sans TC", "微軟正黑體", Arial, sans-serif;
+      background: #f4f6fc;
+      margin: 0;
+      padding: 40px 0 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-bottom: 1.5rem;
+      color: #333;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 1.2rem;
+      font-weight: 600;
+      color: #555;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      margin-top: 5px;
+      border-radius: 6px;
+      border: 1.5px solid #ccc;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: #764ba2;
+      outline: none;
+    }
+    input[disabled] {
+      background: #f0f0f0;
+      color: #999;
+      text-decoration: line-through;
+    }
+    input[type="file"] {
+      display: none;
+    }
+    .file-label {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 10px 15px;
+      background-color: #764ba2;
+      color: white;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    img.avatar-preview {
+      margin-top: 12px;
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2px solid #764ba2;
+      display: none;
+    }
+    .temp-preview-info {
+      font-size: 0.85rem;
+      color: #d9534f;
+      margin-top: 6px;
+      display: none;
+    }
+    button {
+      margin-top: 2rem;
+      width: 100%;
+      padding: 12px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 6px;
+      background: #764ba2;
+      color: white;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: default;
+    }
+    .info-line {
+      margin-top: 0.6rem;
+      font-size: 0.9rem;
+      color: #777;
+    }
+    .nav-link {
+      margin-bottom: 20px;
+      display: inline-block;
+      color: #764ba2;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .warning {
+      margin-top: 10px;
+      color: #d9534f;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    @media (max-width: 480px) {
+      .container {
+        margin: 0 10px;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="dashboard.html" class="nav-link">&larr; 返回記帳頁</a>
+    <h2>個人資料設定</h2>
+    <form id="profile-form">
+      <label for="name">暱稱</label>
+      <input type="text" id="name" placeholder="請輸入暱稱" required />
+
+      <label for="avatar">大頭貼</label>
+      <label for="avatar" class="file-label">選擇照片</label>
+      <input type="file" id="avatar" accept="image/*" capture="environment" />
+      <img id="avatarPreview" class="avatar-preview" alt="預覽" />
+      <div id="tempAvatarInfo" class="temp-preview-info">（此為暫存預覽，重新整理後會消失）</div>
+
+      <label for="initialAmount">現有金額</label>
+      <input type="number" id="initialAmount" placeholder="可為 0 元" min="0" />
+
+      <div id="initialAmountInfo" class="info-line"></div>
+      <div id="testAccountWarning" class="warning" style="display:none;"></div>
+
+      <button id="saveBtn" type="submit">儲存資料</button>
+    </form>
+  </div>
+
+<script>
+  const testAccounts = ['testuser', 'guest', 'demo'];
+  const loggedInUser = localStorage.getItem('loggedInUser');
+  if (!loggedInUser) {
+    alert("請先登入");
+    location.href = "index.html";
+  }
+
+  const isTestAccount = testAccounts.includes(loggedInUser);
+  const users = JSON.parse(localStorage.getItem('users') || '{}');
+  const userData = users[loggedInUser] || { profile: {}, records: [] };
+
+  const nameInput = document.getElementById('name');
+  const avatarInput = document.getElementById('avatar');
+  const avatarPreview = document.getElementById('avatarPreview');
+  const tempAvatarInfo = document.getElementById('tempAvatarInfo');
+  const initialAmountInput = document.getElementById('initialAmount');
+  const initialAmountInfo = document.getElementById('initialAmountInfo');
+  const testAccountWarning = document.getElementById('testAccountWarning');
+  const saveBtn = document.getElementById('saveBtn');
+
+  function initForm() {
+    nameInput.value = userData.profile.name || loggedInUser;
+    if (userData.profile.avatar) {
+      avatarPreview.src = userData.profile.avatar;
+      avatarPreview.style.display = 'block';
+    } else {
+      avatarPreview.style.display = 'none';
+    }
+
+    // 只有設定過初始金額才鎖定欄位
+    if (userData.profile.initialAmount != null) {
+      initialAmountInput.value = userData.profile.initialAmount;
+      initialAmountInput.disabled = true;
+      initialAmountInput.style.textDecoration = 'line-through';
+      initialAmountInfo.textContent = '現有金額已設定，無法再修改';
+    } else {
+      initialAmountInput.disabled = false;
+      initialAmountInput.style.textDecoration = 'none';
+      initialAmountInfo.textContent = '';
+    }
+
+    if (isTestAccount) {
+      testAccountWarning.style.display = 'block';
+      testAccountWarning.textContent = '目前為測試帳號，所有變更僅限預覽，資料不會儲存';
+      initialAmountInput.disabled = true;
+      initialAmountInput.style.textDecoration = 'line-through';
+    } else {
+      testAccountWarning.style.display = 'none';
+    }
+  }
+  initForm();
+
+  avatarInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      avatarPreview.src = reader.result;
+      avatarPreview.style.display = 'block';
+      tempAvatarInfo.style.display = isTestAccount ? 'block' : 'none';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  document.getElementById('profile-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = nameInput.value.trim();
+    const avatar = avatarPreview.src;
+    const amount = Number(initialAmountInput.value);
+
+    if (isTestAccount) {
+      alert("測試帳號資料不會儲存，此為前端預覽。");
+      return;
+    }
+
+    // 只有欄位未鎖定時才設定初始金額並鎖定欄位
+    if (!initialAmountInput.disabled) {
+      if (isNaN(amount) || amount < 0) {
+        alert("請輸入有效的金額（0 或以上）");
+        return;
+      }
+      userData.profile.initialAmount = amount;
+      initialAmountInput.disabled = true;
+      initialAmountInput.style.textDecoration = 'line-through';
+      initialAmountInfo.textContent = '現有金額已設定，無法再修改';
+    }
+
+    if (avatar && avatar.startsWith("data:image")) {
+      userData.profile.avatar = avatar;
+    }
+
+    userData.profile.name = name || loggedInUser;
+
+    users[loggedInUser] = userData;
+    localStorage.setItem('users', JSON.stringify(users));
+
+    alert("儲存成功！");
+    location.href = "dashboard.html";
+  });
+</script>
+</body>
+</html>

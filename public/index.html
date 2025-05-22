@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>記帳本 - 登入</title>
+  <style>
+    /* 你的原本 CSS 不變 */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 40px;
+      border-radius: 12px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(8px);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 24px;
+      font-weight: 700;
+      font-size: 2rem;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    input[type="text"], input[type="password"] {
+      padding: 14px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: background-color 0.3s ease;
+    }
+    input[type="text"]:focus, input[type="password"]:focus {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+    button {
+      padding: 14px;
+      background-color: #5a4eea;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #4338ca;
+    }
+    p {
+      margin-top: 18px;
+      font-size: 0.9rem;
+    }
+    p a {
+      color: #e0d7ff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    p a:hover {
+      text-decoration: underline;
+    }
+    .error-message {
+      color: #ff6b6b;
+      margin-top: 12px;
+      font-weight: 600;
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 25px;
+      }
+      h1 {
+        font-size: 1.5rem;
+      }
+      button {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>記帳本 登入</h1>
+    <form id="login-form">
+      <input type="text" id="login-username" placeholder="帳號" required autocomplete="username" />
+      <input type="password" id="login-password" placeholder="密碼" required autocomplete="current-password" />
+      <button type="submit">登入</button>
+    </form>
+    <p>沒有帳號？<a href="register.html">註冊</a></p>
+    <div class="error-message" id="error-msg"></div>
+  </div>
+
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const errorMsg = document.getElementById('error-msg');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMsg.textContent = '';
+
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!username || !password) {
+        errorMsg.textContent = '請輸入帳號與密碼';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',  // 重要：讓瀏覽器帶 cookie
+          body: JSON.stringify({ username, password }),
+        });
+
+        if (!res.ok) {
+          // 伺服器回傳錯誤
+          const data = await res.json();
+          errorMsg.textContent = data.message || '登入失敗';
+          return;
+        }
+
+        // 登入成功，直接跳轉 dashboard
+        window.location.href = 'dashboard.html';
+      } catch (error) {
+        errorMsg.textContent = '網路錯誤，請稍後再試';
+        console.error(error);
+      }
+    });
+  </script>
+  
+</body>
+</html>
