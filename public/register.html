@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>記帳本 - 註冊</title>
   <style>
+    /* CSS 不變，跟你之前的一樣 */
     * {
       box-sizing: border-box;
     }
@@ -155,9 +156,9 @@
           return;
         }
 
-        successMsg.textContent = '註冊成功！3秒後自動跳轉登入頁面';
+        successMsg.textContent = '註冊成功！3秒後自動跳轉首頁';
         setTimeout(() => {
-          window.location.href = 'login.html';
+          window.location.href = 'index.html';  // <- 這裡改成跳轉 index.html
         }, 3000);
       } catch (error) {
         errorMsg.textContent = '網路錯誤，請稍後再試';
