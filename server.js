@@ -100,6 +100,7 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
+// 修改這裡：登入後強制儲存 session，避免讀取失敗
 app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
@@ -114,7 +115,14 @@ app.post('/api/login', async (req, res) => {
     }
 
     req.session.username = username;
-    res.json({ success: true, message: '登入成功', username });
+
+    req.session.save(err => {
+      if (err) {
+        console.error('Session 儲存失敗:', err);
+        return res.status(500).json({ success: false, message: '伺服器錯誤' });
+      }
+      res.json({ success: true, message: '登入成功', username });
+    });
   } catch (e) {
     console.error('登入失敗:', e);
     res.status(500).json({ success: false, message: '伺服器錯誤' });
@@ -269,7 +277,7 @@ app.delete('/api/records/:id', requireLogin, (req, res) => {
   }
 });
 
-// 刪除帳號，會刪除帳號所有資料並登出
+// 修改這裡：刪除帳號後確保 session 銷毀再回應
 app.delete('/api/account', requireLogin, (req, res) => {
   try {
     const users = readUsers();
