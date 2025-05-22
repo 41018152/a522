@@ -289,27 +289,33 @@
 
   const logoutBtn = document.getElementById("logoutBtn");
 
-  // 取得用戶資料
   async function fetchUserData() {
     try {
-      const res = await fetch(`/api/user/${loggedInUser}`);
+      const res = await fetch('/api/me', {
+        method: 'GET',
+        credentials: 'include' // 這行很重要，會帶上 session cookie
+      });
       if (!res.ok) throw new Error("讀取用戶資料失敗");
       const data = await res.json();
-      return data;
+      return {
+        profile: data.profile,
+        records: data.profile?.records || []
+      };
     } catch (err) {
       alert(err.message);
       return null;
-    }
+      }
   }
+
 
   // 新增記錄 API
   async function addRecord(record) {
     try {
-      const res = await fetch(`/api/user/${loggedInUser}/records`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(record),
+      const res = await fetch('/api/me', {
+        method: 'GET',
+        credentials: 'include'
       });
+
       if (!res.ok) throw new Error("新增記錄失敗");
       return await res.json();
     } catch (err) {
@@ -321,11 +327,13 @@
   // 刪除記錄 API
   async function deleteRecord(recordKey) {
     try {
-      const res = await fetch(`/api/user/${loggedInUser}/records`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(recordKey),
+      const res = await fetch('/api/records', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+       body: JSON.stringify(newRecord)
       });
+
       if (!res.ok) throw new Error("刪除記錄失敗");
       return await res.json();
     } catch (err) {

@@ -265,21 +265,40 @@
     });
 
     // 刪除帳號功能
-    deleteAccountBtn.addEventListener('click', () => {
-      if (isTestAccount) {
-        alert("測試帳號無法刪除！");
+  deleteAccountBtn.addEventListener('click', async () => {
+    if (isTestAccount) {
+     alert("測試帳號無法刪除！");
+      return;
+    }
+
+    const confirmed = confirm("確定要刪除帳號嗎？此動作無法復原！");
+    if (!confirmed) return;
+
+    try {
+      // 呼叫後端刪除帳號
+        const res = await fetch('/api/account', {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        alert(data.message || "刪除帳號失敗");
         return;
       }
-      const confirmed = confirm("確定要刪除帳號嗎？此動作無法復原！");
-      if (!confirmed) return;
 
+      // 清除前端資料
       delete users[loggedInUser];
       localStorage.setItem('users', JSON.stringify(users));
       localStorage.removeItem('loggedInUser');
 
       alert("帳號已刪除，將跳轉至首頁");
       location.href = "index.html";
-    });
+    } catch (err) {
+      alert("網路錯誤，請稍後再試");
+      console.error(err);
+    }
+  });
   </script>
 </body>
 </html>
